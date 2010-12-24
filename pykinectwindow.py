@@ -8,7 +8,7 @@ from OpenGL.GL import *
 
 # Get the app ourselves so we can attach it to each window
 if not '__myapp' in wx.__dict__:
-  wx.__myapp = wx.PySimpleApp()
+    wx.__myapp = wx.PySimpleApp()
 app = wx.__myapp
 
 
@@ -17,23 +17,25 @@ class Window(wx.Frame):
     # wx events can be put in directly
     def eventx(self, target):
         def wrapper(*args, **kwargs):
-          target(*args, **kwargs)
+            target(*args, **kwargs)
         self.canvas.Bind(wx.__dict__[target.__name__], wrapper)
-  
+        return target
+
     # Events special to this class, just add them this way
     def event(self, target):
         def wrapper(*args, **kwargs):
-          target(*args, **kwargs)   
+            target(*args, **kwargs)
         self.__dict__[target.__name__] = wrapper
-        
-    def _wrap(self, name, *args, **kwargs):
-      try:
-        self.__getattribute__(name)
-      except AttributeError:
-        pass
-      else:
-        self.__getattribute__(name)(*args, **kwargs)
-            
+        return target
+          
+    def _try_call(self, name, *args, **kwargs):
+        try:
+            self.__getattribute__(name)
+        except AttributeError:
+            pass
+        else:
+            self.__getattribute__(name)(*args, **kwargs)
+
     def __init__(self, title='WxWindow', id=-1, pos=wx.DefaultPosition,
                  size=wx.DefaultSize, style=wx.DEFAULT_FRAME_STYLE,
                  name='frame'):
@@ -43,9 +45,7 @@ class Window(wx.Frame):
                       glcanvas.WX_GL_DOUBLEBUFFER,  # Double Buffered
                       glcanvas.WX_GL_DEPTH_SIZE, 24,  # 24 bit depth
                       glcanvas.WX_GL_STENCIL_SIZE, 8)
-              
         self.canvas = glcanvas.GLCanvas(self, attribList=attribList)
-
         self.canvas.Bind(wx.EVT_ERASE_BACKGROUND, self.processEraseBackgroundEvent)
         self.canvas.Bind(wx.EVT_SIZE, self.processSizeEvent)
         self.canvas.Bind(wx.EVT_PAINT, self.processPaintEvent)
@@ -67,10 +67,10 @@ class Window(wx.Frame):
     def processPaintEvent(self, event=None):
         """Process the drawing event."""
         self.canvas.SetCurrent()
-        self._wrap('on_draw')
+        self._try_call('on_draw')
         self.canvas.SwapBuffers()
         if event:
-          event.Skip()
+            event.Skip()
 
     def OnReshape(self, width, height):
         """Reshape the OpenGL viewport based on the dimensions of the window."""
